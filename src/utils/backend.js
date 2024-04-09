@@ -1,9 +1,11 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
-const baseURL = 'https://api-word2wp.sunshine.software/api';
+
+export const ProductionUrl = 'https://api-word2wp.sunshine.software/api';
+export const DevUrl = 'https://localhost:5000/api';
 
 export const backendRequest = axios.create({
-    baseURL: baseURL,
+    baseURL: ProductionUrl,
 });
 
 backendRequest.interceptors.request.use(

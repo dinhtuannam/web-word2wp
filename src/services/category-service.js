@@ -1,7 +1,7 @@
 import { postDataRequest, getDataRequest } from "../utils/backend"
 
-export const getCategories = async() =>{
-    const path = "/Tool/categories"
+export const getCategories = async(url) =>{
+    const path = `/Tool/categories?url=${url}`
     const res = await getDataRequest(path,{})
     console.log(res);
     if(!res) return [];

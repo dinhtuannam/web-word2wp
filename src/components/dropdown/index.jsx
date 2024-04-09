@@ -5,10 +5,12 @@ import { getCategoriesThunk, selectCategory } from '../../redux/dropdown-slice';
 
   const DropdownComp = () => {
     const data = useSelector(state => state.dropdownReducer.list);
+    const loading = useSelector(state => state.dropdownReducer.loading);
+    const url = useSelector(state => state.dropdownReducer.url);
     const dispatch = useDispatch()
 
     useEffect(() =>{
-      dispatch(getCategoriesThunk())
+      dispatch(getCategoriesThunk(url))
     },[])
 
     const onChange = (value) => {
@@ -20,7 +22,7 @@ import { getCategoriesThunk, selectCategory } from '../../redux/dropdown-slice';
         style={{
           width: '100%',
         }}
-        placeholder="Chọn danh mục bài viết"
+        placeholder={loading ? "Đang tải dữ liệu, vui lòng chờ trong giây lát" : "Chọn danh mục bài viết"}
         onChange={onChange}
         options={data}
     />

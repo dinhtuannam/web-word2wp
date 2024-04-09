@@ -68,11 +68,14 @@ button:focus-visible {
 }
 
 .ant-upload-select{
-  width: 100% !important
+  width: 100% !important;
+  height: 64px;
 }
 
 .ant-btn{
-  width: 100% !important
+  height: 100%;
+  width: 100% !important;
+  border: 1px solid #000;
 }
 
 .ant-form{

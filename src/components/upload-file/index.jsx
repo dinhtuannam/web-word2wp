@@ -1,104 +1,101 @@
-import { message, Upload } from 'antd';
+import { message, Upload, Button } from 'antd';
 import { useState } from 'react';
-import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
+import { UploadOutlined } from '@ant-design/icons';
 import { useSelector ,useDispatch } from 'react-redux';
 import { getCategoriesThunk } from '../../redux/dropdown-slice';
+import { DevUrl, ProductionUrl } from '../../utils/backend';
 import "./index.css"
+import DropdownComp from '../dropdown';
 
 const UploadFile = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-  const [failed, setFailed] = useState('');
+  const [fileList, setFileList] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const category = useSelector(state => state.dropdownReducer.category);
+  const url = useSelector(state => state.dropdownReducer.url);
   const dispatch = useDispatch()
+
+  console.log(category);
 
   const getCategories = () =>{
     return category.join(', ');
   }
 
-  const handleChange = (info) => {
-    if (info.file.status === 'uploading') {
-      setLoading(true);
+  const handleUpload = () => {
+    const formData = new FormData();
+    if(category.length <= 0){
+      message.error('Vui lòng chọn danh mục');
+      return;
     }
-    if (info.file.status === 'done') {
-      setLoading(false);
-      if(info.file.response?.retCode === 1){
-        message.error(info.file.response?.retText);
-      }
-      else{
-        if(info.file.response?.data?.failed?.length > 0){
-          setError(true);
-          setFailed(info.file.response?.data?.failed.join(', '))
+    fileList.forEach((file) => {
+      
+      formData.append('files', file);
+    });
+    setUploading(true);
+  
+    fetch(`${ProductionUrl}/Tool/upload?categories=${getCategories()}&url=${url}`, {
+      method: 'POST',
+      body: formData,
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.retCode === 0) {
+          setFileList([]);
+          dispatch(getCategoriesThunk(url))
+          message.success(res.retText);
+        } else {
+          message.error(res.retText);
         }
-        else{
-          setError(false);
-          setFailed('');
-        }
-        dispatch(getCategoriesThunk())
-        message.success(`Tải file thành công`);
-      }
-    }
-    if (info.file.status === 'error') {
-      setLoading(false);
-      message.error(`Tải file thất bại`);
-    }
+      })
+      .catch(() => {
+        message.error('Tải file thất bại');
+      })
+      .finally(() => {
+        setUploading(false);
+      });
   };
+  
 
-  const uploadButton = (
-    <button
-      style={{
-        border: 0,
-        background: 'none',
-        width: 280
-      }}
-      type="button"
-    >
-      {loading ? <LoadingOutlined /> : <PlusOutlined />}
-      <div
-        style={{
-          marginTop: 8,
-        }}
-      >
-        {loading ? "Đang tiến hành upload file" : "Tải lên file doc, docx hoặc zip"}
-        
-      </div>
-    </button>
-  );
-
-  const beforeUpload = (file) => {
-    console.log(file);
-    const allowedTypes = ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip','application/x-zip-compressed'];
-    const isAllowed = allowedTypes.includes(file.type);
-    if (!isAllowed) {
-      message.error('Chỉ cho phép upload file doc, docx và zip');
+  const props = {
+    onRemove: (file) => {
+      const index = fileList.indexOf(file);
+      const newFileList = fileList.slice();
+      newFileList.splice(index, 1);
+      setFileList(newFileList);
+    },
+    beforeUpload: (file) => {
+      const allowedTypes = ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip','application/x-zip-compressed'];
+      const isAllowed = allowedTypes.includes(file.type);
+      if (!isAllowed) {
+        message.error('Chỉ có thể upload file doc, docx và zip');
+        return;
+      }
+      setFileList([...fileList, file]);
       return false;
-    }
-    if (category.length <= 0) {;
-      message.error('Vui lòng chọn danh mục bài viết');
-      return false;
-    }
-    return true;
+    },
+    fileList,
   };
 
   return (
     <>
-      <Upload
-        name="file"
-        listType="picture-card"
-        className="file-uploader"
-        showUploadList={true}
-        action={`https://api-word2wp.sunshine.software/api/Tool/upload?categories=${getCategories()}`}
-        beforeUpload={beforeUpload}
-        onChange={handleChange}
-      >
-        {uploadButton}
+      <Upload {...props} style={{
+          height: 40
+        }}>
+        <Button icon={<UploadOutlined />}>Tải lên file doc, docx hoặc zip</Button>
       </Upload>
-      {error && 
-        <div class="failed-file">
-          <span style={{marginRight:8}}>File tải thất bại :</span>
-          <span>{failed}</span>
-        </div>
-      }
+      <div className='dropdown-container' style={{marginTop:6}}>
+          <DropdownComp />
+      </div>
+      <Button
+        type="primary"
+        onClick={handleUpload}
+        disabled={fileList.length === 0}
+        loading={uploading}
+        style={{
+          marginTop: 6,
+        }}
+      >
+        {uploading ? 'Đang tiến hành upload' : 'Bắt đầu upload'}
+      </Button>
     </>
   );
 }
