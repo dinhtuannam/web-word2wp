@@ -14,8 +14,6 @@ const UploadFile = () => {
   const url = useSelector(state => state.dropdownReducer.url);
   const dispatch = useDispatch()
 
-  console.log(category);
-
   const getCategories = () =>{
     return category.join(', ');
   }
